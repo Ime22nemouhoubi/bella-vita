@@ -164,7 +164,7 @@ export default function AdminProducts() {
             onSubmit={submit}
             onClick={(e) => e.stopPropagation()}
             className="bg-white rounded-3xl shadow-2xl max-w-2xl w-full flex flex-col"
-            style={{ maxHeight: 'calc(100dvh - 1rem)' }}
+            style={{ maxHeight: 'calc(100dvh - 1rem)', height: 'auto' }}
           >
             <div className="flex items-center justify-between px-6 md:px-8 py-4 border-b border-rose-100 flex-shrink-0">
               <h2 className="font-display text-2xl text-ink">
@@ -177,7 +177,11 @@ export default function AdminProducts() {
                 aria-label="Close"
               >×</button>
             </div>
-            <div className="overflow-y-auto px-6 md:px-8 py-5 space-y-4" style={{ minHeight: 0 }}>
+            <div
+              ref={(el) => { if (el) el.scrollTop = 0; }}
+              className="overflow-y-auto px-6 md:px-8 py-5 space-y-4 flex-1"
+              style={{ minHeight: 0 }}
+            >
             <div className="grid sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-xs text-ink/60 mb-1">{t('products_name_fr')} *</label>
