@@ -1,7 +1,8 @@
 import axios from 'axios';
 
-const baseURL = import.meta.env.VITE_API_URL || 'http://localhost:4000';
-
+// In production, frontend and backend are served from the same Railway URL,
+// so we use a relative API path. Locally, fall back to localhost:4000.
+const baseURL = import.meta.env.VITE_API_URL || (import.meta.env.PROD ? '' : 'http://localhost:4000');
 export const api = axios.create({ baseURL: `${baseURL}/api` });
 
 export function setAuthToken(token) {
