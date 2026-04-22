@@ -23,7 +23,7 @@ export default function Footer() {
         <div>
           <div className="text-xs uppercase tracking-[0.3em] text-gold mb-3">{t('footer_contact')}</div>
           <ul className="space-y-2 text-sm text-cream/70">
-            <li>contact@bellavita.dz</li>
+            <li>cosmetic.bellavita@gmail.com</li>
             <li>+213 555 074 084</li>
             <li>Baba Hassen, Algérie</li>
           </ul>
