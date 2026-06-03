@@ -2,6 +2,7 @@
 const express = require('express');
 const db = require('../db');
 const { authRequired } = require('../middleware/auth');
+const { sendNewOrderEmail } = require('../mailer');
 
 const router = express.Router();
 
@@ -55,6 +56,24 @@ router.post('/', (req, res) => {
   });
 
   const orderId = tx();
+
+  // Fire-and-forget notification email — never blocks the response
+  sendNewOrderEmail({
+    orderId,
+    customer_name: customer_name.trim(),
+    customer_phone: customer_phone.trim(),
+    wilaya: wilaya.trim(),
+    address: address.trim(),
+    notes: (notes || '').trim(),
+    total,
+    items: validated.map((v) => ({
+      product_name: v.name,
+      quantity: v.quantity,
+      unit_price: v.price,
+    })),
+    created_at: new Date().toISOString(),
+  }).catch(() => {}); // safety net — mailer already catches its own errors
+
   res.status(201).json({ id: orderId, total });
 });
 

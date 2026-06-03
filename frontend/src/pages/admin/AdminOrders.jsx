@@ -103,73 +103,95 @@ export default function AdminOrders() {
       )}
 
       {selected && (
-        <div className="fixed inset-0 bg-ink/60 z-50 flex items-start md:items-center justify-center p-2 md:p-4 overflow-y-auto" onClick={() => setSelected(null)}>
-          <div onClick={(e) => e.stopPropagation()} className="bg-white rounded-3xl shadow-2xl max-w-2xl w-full p-6 md:p-8 my-4 md:my-8 max-h-[calc(100vh-2rem)] overflow-y-auto">
-            <div className="flex items-start justify-between mb-6">
+        <div
+          className="fixed inset-0 bg-ink/60 z-50 flex items-center justify-center p-2 md:p-4"
+          onClick={() => setSelected(null)}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="bg-white rounded-3xl shadow-2xl max-w-2xl w-full flex flex-col"
+            style={{ maxHeight: 'calc(100dvh - 1rem)' }}
+          >
+            {/* Sticky header */}
+            <div className="flex items-center justify-between px-6 md:px-8 py-4 border-b border-rose-100 flex-shrink-0">
               <div>
                 <div className="text-xs uppercase tracking-wider text-ink/50">Commande</div>
                 <h2 className="font-display text-3xl text-ink">#{selected.id}</h2>
               </div>
-              <button onClick={() => setSelected(null)} className="text-ink/50 hover:text-ink text-2xl leading-none">×</button>
-            </div>
-
-            <div className="grid sm:grid-cols-2 gap-4 mb-6 text-sm">
-              <Field label={t('orders_customer')} value={selected.customer_name} />
-              <Field label={t('orders_phone')} value={selected.customer_phone} />
-              <Field label="Wilaya" value={selected.wilaya} />
-              <Field label={t('orders_date')} value={new Date(selected.created_at).toLocaleString()} />
-              <div className="sm:col-span-2">
-                <Field label={t('orders_address')} value={selected.address} />
-              </div>
-              {selected.notes && (
-                <div className="sm:col-span-2">
-                  <Field label="Notes" value={selected.notes} />
-                </div>
-              )}
-            </div>
-
-            <div className="mb-6">
-              <div className="text-xs uppercase tracking-wider text-ink/50 mb-2">{t('orders_items')}</div>
-              <ul className="divide-y divide-rose-100 border border-rose-100 rounded-xl">
-                {selected.items.map((it) => (
-                  <li key={it.id} className="p-3 flex justify-between text-sm">
-                    <span>{it.product_name} <span className="text-ink/50">× {it.quantity}</span></span>
-                    <span className="font-medium">
-                      {(it.unit_price * it.quantity).toLocaleString()} {t('currency')}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-              <div className="mt-3 text-end font-display text-2xl text-burgundy">
-                {Number(selected.total).toLocaleString()} {t('currency')}
-              </div>
-            </div>
-
-            <div className="border-t border-rose-100 pt-5 flex flex-wrap gap-3 items-center justify-between">
-              <div>
-                <div className="text-xs uppercase tracking-wider text-ink/50 mb-2">{t('orders_change_status')}</div>
-                <div className="flex flex-wrap gap-2">
-                  {STATUSES.map((s) => (
-                    <button
-                      key={s}
-                      onClick={() => setStatus(selected.id, s)}
-                      className={`px-3 py-1.5 rounded-full text-xs ${
-                        selected.status === s
-                          ? STATUS_COLORS[s] + ' ring-2 ring-offset-1 ring-burgundy'
-                          : 'bg-white border border-rose-200 hover:bg-rose-50'
-                      }`}
-                    >
-                      {t(`orders_status_${s}`)}
-                    </button>
-                  ))}
-                </div>
-              </div>
               <button
-                onClick={() => handleDelete(selected.id)}
-                className="text-rose-600 hover:underline text-sm"
-              >
-                {t('products_delete')}
-              </button>
+                onClick={() => setSelected(null)}
+                className="text-ink/50 hover:text-ink text-3xl leading-none w-8 h-8 flex items-center justify-center"
+                aria-label="Close"
+              >×</button>
+            </div>
+
+            {/* Scrollable body — always starts at top */}
+            <div
+              ref={(el) => { if (el) el.scrollTop = 0; }}
+              className="overflow-y-auto px-6 md:px-8 py-5 flex-1"
+              style={{ minHeight: 0 }}
+            >
+              <div className="grid sm:grid-cols-2 gap-4 mb-6 text-sm">
+                <Field label={t('orders_customer')} value={selected.customer_name} />
+                <Field label={t('orders_phone')} value={selected.customer_phone} />
+                <Field label="Wilaya" value={selected.wilaya} />
+                <Field label={t('orders_date')} value={new Date(selected.created_at).toLocaleString()} />
+                <div className="sm:col-span-2">
+                  <Field label={t('orders_address')} value={selected.address} />
+                </div>
+                {selected.notes && (
+                  <div className="sm:col-span-2">
+                    <Field label="Notes" value={selected.notes} />
+                  </div>
+                )}
+              </div>
+
+              <div className="mb-2">
+                <div className="text-xs uppercase tracking-wider text-ink/50 mb-2">{t('orders_items')}</div>
+                <ul className="divide-y divide-rose-100 border border-rose-100 rounded-xl">
+                  {selected.items.map((it) => (
+                    <li key={it.id} className="p-3 flex justify-between text-sm">
+                      <span>{it.product_name} <span className="text-ink/50">× {it.quantity}</span></span>
+                      <span className="font-medium">
+                        {(it.unit_price * it.quantity).toLocaleString()} {t('currency')}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+                <div className="mt-3 text-end font-display text-2xl text-burgundy">
+                  {Number(selected.total).toLocaleString()} {t('currency')}
+                </div>
+              </div>
+            </div>
+
+            {/* Sticky footer — status actions and delete always visible */}
+            <div className="px-6 md:px-8 py-4 border-t border-rose-100 flex-shrink-0 bg-white rounded-b-3xl">
+              <div className="flex flex-wrap gap-3 items-center justify-between">
+                <div className="flex-1 min-w-0">
+                  <div className="text-xs uppercase tracking-wider text-ink/50 mb-2">{t('orders_change_status')}</div>
+                  <div className="flex flex-wrap gap-2">
+                    {STATUSES.map((s) => (
+                      <button
+                        key={s}
+                        onClick={() => setStatus(selected.id, s)}
+                        className={`px-3 py-1.5 rounded-full text-xs ${
+                          selected.status === s
+                            ? STATUS_COLORS[s] + ' ring-2 ring-offset-1 ring-burgundy'
+                            : 'bg-white border border-rose-200 hover:bg-rose-50'
+                        }`}
+                      >
+                        {t(`orders_status_${s}`)}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <button
+                  onClick={() => handleDelete(selected.id)}
+                  className="text-rose-600 hover:underline text-sm flex-shrink-0"
+                >
+                  {t('products_delete')}
+                </button>
+              </div>
             </div>
           </div>
         </div>
