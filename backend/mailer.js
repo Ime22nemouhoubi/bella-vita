@@ -1,31 +1,26 @@
-// mailer.js — sends notification emails via SMTP
-const nodemailer = require('nodemailer');
+// mailer.js — sends order notification emails via Resend (HTTPS API).
+// Why Resend instead of SMTP: Railway blocks outbound SMTP ports (25, 465, 587).
+// Resend works over HTTPS so it's unaffected by those restrictions.
+//
+// Required env vars (set in Railway → Variables):
+//   RESEND_API_KEY        — starts with re_... (get from https://resend.com/api-keys)
+//   NOTIFICATION_EMAIL    — where to send order alerts (e.g. med.elasker@gmail.com)
+// Optional:
+//   RESEND_FROM           — sender address (default: "Bella Vita <onboarding@resend.dev>")
 require('dotenv').config();
 
-// SMTP credentials come from env vars. Configure these in Railway.
-// For Gmail: use an "App Password" (NOT your normal password):
-//   1. Enable 2FA on your Google account
-//   2. https://myaccount.google.com/apppasswords → create app password
-//   3. Paste the 16-char password into SMTP_PASSWORD
-const SMTP_HOST   = process.env.SMTP_HOST   || 'smtp.gmail.com';
-const SMTP_PORT   = Number(process.env.SMTP_PORT || 465);
-const SMTP_SECURE = process.env.SMTP_SECURE !== 'false'; // true unless explicitly disabled
-const SMTP_USER   = process.env.SMTP_USER;
-const SMTP_PASSWORD = process.env.SMTP_PASSWORD;
+const RESEND_API_KEY = process.env.RESEND_API_KEY;
 const NOTIFICATION_EMAIL = process.env.NOTIFICATION_EMAIL || 'med.elasker@gmail.com';
-const FROM_NAME = process.env.SMTP_FROM_NAME || 'Bella Vita';
+const RESEND_FROM = process.env.RESEND_FROM || 'Bella Vita <onboarding@resend.dev>';
 
-let transporter = null;
-function getTransporter() {
-  if (!SMTP_USER || !SMTP_PASSWORD) return null;
-  if (transporter) return transporter;
-  transporter = nodemailer.createTransport({
-    host: SMTP_HOST,
-    port: SMTP_PORT,
-    secure: SMTP_SECURE,
-    auth: { user: SMTP_USER, pass: SMTP_PASSWORD },
-  });
-  return transporter;
+let resendClient = null;
+function getClient() {
+  if (!RESEND_API_KEY) return null;
+  if (resendClient) return resendClient;
+  // Lazy-load the SDK so missing dep doesn't break server startup
+  const { Resend } = require('resend');
+  resendClient = new Resend(RESEND_API_KEY);
+  return resendClient;
 }
 
 /**
@@ -33,13 +28,14 @@ function getTransporter() {
  * Fire-and-forget — never throws; logs errors instead so order flow isn't blocked.
  */
 async function sendNewOrderEmail({ orderId, customer_name, customer_phone, wilaya, address, notes, total, items, created_at }) {
-  const t = getTransporter();
-  if (!t) {
-    console.warn('⚠️  SMTP credentials not configured (SMTP_USER / SMTP_PASSWORD). Skipping email.');
+  const resend = getClient();
+  if (!resend) {
+    console.warn('⚠️  RESEND_API_KEY not configured. Skipping order email.');
     return;
   }
 
   const dateStr = new Date(created_at || Date.now()).toLocaleString('fr-FR', { dateStyle: 'medium', timeStyle: 'short' });
+
   const itemsHtml = (items || [])
     .map(i => `<tr>
       <td style="padding:8px 12px;border-bottom:1px solid #eee;">${escapeHtml(i.product_name)} <span style="color:#888;">× ${i.quantity}</span></td>
@@ -104,14 +100,18 @@ Total : ${Number(total).toLocaleString('fr-FR')} DA
   `.trim();
 
   try {
-    await t.sendMail({
-      from: `"${FROM_NAME}" <${SMTP_USER}>`,
+    const { data, error } = await resend.emails.send({
+      from: RESEND_FROM,
       to: NOTIFICATION_EMAIL,
       subject,
-      text,
       html,
+      text,
     });
-    console.log(`✉️  Order notification email sent for order #${orderId}`);
+    if (error) {
+      console.error(`✗ Resend rejected email for order #${orderId}:`, error.message || error);
+    } else {
+      console.log(`✉️  Order notification email sent for order #${orderId} (id=${data?.id})`);
+    }
   } catch (err) {
     console.error(`✗ Failed to send order email for #${orderId}:`, err.message);
   }
