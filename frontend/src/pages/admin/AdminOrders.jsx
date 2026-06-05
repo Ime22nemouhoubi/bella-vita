@@ -135,6 +135,7 @@ export default function AdminOrders() {
                 <Field label={t('orders_customer')} value={selected.customer_name} />
                 <Field label={t('orders_phone')} value={selected.customer_phone} />
                 <Field label="Wilaya" value={selected.wilaya} />
+                <Field label={t('checkout_commune')} value={selected.commune || '—'} />
                 <Field label={t('orders_date')} value={new Date(selected.created_at).toLocaleString()} />
                 <div className="sm:col-span-2">
                   <Field label={t('orders_address')} value={selected.address} />

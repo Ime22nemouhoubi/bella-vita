@@ -27,7 +27,7 @@ function getClient() {
  * Send a "new order received" notification.
  * Fire-and-forget — never throws; logs errors instead so order flow isn't blocked.
  */
-async function sendNewOrderEmail({ orderId, customer_name, customer_phone, wilaya, address, notes, total, items, created_at }) {
+async function sendNewOrderEmail({ orderId, customer_name, customer_phone, wilaya, commune, address, notes, total, items, created_at }) {
   const resend = getClient();
   if (!resend) {
     console.warn('⚠️  RESEND_API_KEY not configured. Skipping order email.');
@@ -63,7 +63,7 @@ async function sendNewOrderEmail({ orderId, customer_name, customer_phone, wilay
           <div style="font-size:12px;text-transform:uppercase;letter-spacing:1px;color:#888;margin-bottom:8px;">Client</div>
           <div style="font-size:16px;font-weight:600;margin-bottom:4px;">${escapeHtml(customer_name)}</div>
           <div style="font-size:14px;color:#666;">📞 ${escapeHtml(customer_phone)}</div>
-          <div style="font-size:14px;color:#666;margin-top:4px;">📍 ${escapeHtml(wilaya)} — ${escapeHtml(address)}</div>
+          <div style="font-size:14px;color:#666;margin-top:4px;">📍 ${escapeHtml(wilaya)}${commune ? ` — ${escapeHtml(commune)}` : ''} — ${escapeHtml(address)}</div>
           ${notes ? `<div style="font-size:13px;color:#666;margin-top:8px;font-style:italic;">Notes : ${escapeHtml(notes)}</div>` : ''}
         </div>
 
@@ -91,7 +91,7 @@ Date : ${dateStr}
 Client :
   ${customer_name}
   ${customer_phone}
-  ${wilaya} — ${address}
+  ${wilaya}${commune ? ` — ${commune}` : ''} — ${address}
 ${notes ? `  Notes : ${notes}\n` : ''}
 Articles :
 ${itemsText}

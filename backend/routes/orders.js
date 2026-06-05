@@ -10,9 +10,9 @@ const VALID_STATUSES = ['pending', 'confirmed', 'shipped', 'delivered', 'cancell
 
 // PUBLIC — submit a new order
 router.post('/', (req, res) => {
-  const { customer_name, customer_phone, wilaya, address, notes, items } = req.body || {};
-  if (!customer_name || !customer_phone || !wilaya || !address) {
-    return res.status(400).json({ error: 'Customer name, phone, wilaya and address are required' });
+  const { customer_name, customer_phone, wilaya, commune, address, notes, items } = req.body || {};
+  if (!customer_name || !customer_phone || !wilaya || !commune || !address) {
+    return res.status(400).json({ error: 'Customer name, phone, wilaya, commune and address are required' });
   }
   if (!Array.isArray(items) || items.length === 0) {
     return res.status(400).json({ error: 'Order must contain at least one item' });
@@ -33,7 +33,7 @@ router.post('/', (req, res) => {
   }
 
   const insertOrder = db.prepare(
-    `INSERT INTO orders (customer_name, customer_phone, wilaya, address, notes, total) VALUES (?, ?, ?, ?, ?, ?)`
+    `INSERT INTO orders (customer_name, customer_phone, wilaya, commune, address, notes, total) VALUES (?, ?, ?, ?, ?, ?, ?)`
   );
   const insertItem = db.prepare(
     `INSERT INTO order_items (order_id, product_id, product_name, unit_price, quantity) VALUES (?, ?, ?, ?, ?)`
@@ -44,6 +44,7 @@ router.post('/', (req, res) => {
       customer_name.trim(),
       customer_phone.trim(),
       wilaya.trim(),
+      commune.trim(),
       address.trim(),
       (notes || '').trim(),
       total
@@ -63,6 +64,7 @@ router.post('/', (req, res) => {
     customer_name: customer_name.trim(),
     customer_phone: customer_phone.trim(),
     wilaya: wilaya.trim(),
+    commune: commune.trim(),
     address: address.trim(),
     notes: (notes || '').trim(),
     total,

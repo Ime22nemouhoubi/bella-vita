@@ -4,6 +4,7 @@ import { useLang } from '../context/LanguageContext.jsx';
 import { useCart } from '../context/CartContext.jsx';
 import { submitOrder } from '../api/client.js';
 import { WILAYAS } from '../locales/wilayas.js';
+import { COMMUNES } from '../locales/communes.js';
 
 export default function Checkout() {
   const { t, lang } = useLang();
@@ -14,6 +15,7 @@ export default function Checkout() {
     customer_name: '',
     customer_phone: '',
     wilaya: '',
+    commune: '',
     address: '',
     notes: '',
   });
@@ -22,12 +24,21 @@ export default function Checkout() {
 
   if (items.length === 0) return <Navigate to="/cart" />;
 
-  const update = (field, value) => setForm((prev) => ({ ...prev, [field]: value }));
+  const update = (field, value) => {
+    setForm((prev) => {
+      // Reset commune whenever wilaya changes — old commune may not be in new wilaya
+      if (field === 'wilaya') return { ...prev, wilaya: value, commune: '' };
+      return { ...prev, [field]: value };
+    });
+  };
+
+  // Communes for the currently selected wilaya (empty if no wilaya yet)
+  const communesForWilaya = form.wilaya && COMMUNES[form.wilaya] ? COMMUNES[form.wilaya] : [];
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
-    if (!form.customer_name || !form.customer_phone || !form.wilaya || !form.address) {
+    if (!form.customer_name || !form.customer_phone || !form.wilaya || !form.commune || !form.address) {
       setError(t('checkout_required'));
       return;
     }
@@ -92,6 +103,24 @@ export default function Checkout() {
                 })}
               </select>
             </div>
+          </div>
+          <div>
+            <label className="block text-sm text-ink/70 mb-2">{t('checkout_commune')} *</label>
+            <select
+              value={form.commune}
+              onChange={(e) => update('commune', e.target.value)}
+              className={inputCls + (form.wilaya ? '' : ' opacity-60 cursor-not-allowed')}
+              required
+              disabled={!form.wilaya}
+            >
+              <option value="">
+                {form.wilaya ? t('checkout_commune_select') : t('checkout_select_wilaya_first')}
+              </option>
+              {communesForWilaya.map(({ fr, ar }) => {
+                const label = lang === 'ar' ? ar : fr;
+                return <option key={fr} value={fr}>{label}</option>;
+              })}
+            </select>
           </div>
           <div>
             <label className="block text-sm text-ink/70 mb-2">{t('checkout_address')} *</label>

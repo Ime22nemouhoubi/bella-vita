@@ -39,6 +39,7 @@ db.exec(`
     customer_name TEXT NOT NULL,
     customer_phone TEXT NOT NULL,
     wilaya TEXT NOT NULL,
+    commune TEXT NOT NULL DEFAULT '',
     address TEXT NOT NULL,
     notes TEXT,
     total REAL NOT NULL,
@@ -64,5 +65,18 @@ db.exec(`
     created_at TEXT DEFAULT CURRENT_TIMESTAMP
   );
 `);
+
+// ---------- Safe migrations for existing databases ----------
+// `CREATE TABLE IF NOT EXISTS` only runs on fresh databases.
+// For databases that already exist on Railway, we need ALTER TABLE.
+function addColumnIfMissing(table, column, definition) {
+  const cols = db.prepare(`PRAGMA table_info(${table})`).all();
+  if (!cols.find((c) => c.name === column)) {
+    db.exec(`ALTER TABLE ${table} ADD COLUMN ${column} ${definition}`);
+    console.log(`✓ Added column ${table}.${column}`);
+  }
+}
+
+addColumnIfMissing('orders', 'commune', "TEXT NOT NULL DEFAULT ''");
 
 module.exports = db;
